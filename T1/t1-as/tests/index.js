@@ -28,6 +28,9 @@ function greedy_snake_fn_checker (snake, food) {
         }
         if (new_snake[0] == food[0] && new_snake[1] == food[1]) {
             console.log("Total turn: " + turn);
+            if (turn > 12){
+                console.log(snake, food)
+            }
             return turn;
         }
         now_snake = [
@@ -44,8 +47,8 @@ function generateRandomSnakeAndFood() {
     const snake = [];
     const food = [];
 
-    const headX = Math.floor(Math.random() * 7) + 1;
-    const headY = Math.floor(Math.random() * 7) + 1;
+    const headX = Math.floor(Math.random() * 8) + 1;
+    const headY = Math.floor(Math.random() * 8) + 1;
 
     snake.push(headX, headY);
 
