@@ -52,13 +52,34 @@ function generateRandomSnakeAndFood() {
     const directions = [
         [0, 1], [0, -1], [-1, 0], [1, 0]
     ];
-    const dir = directions[Math.floor(Math.random() * 4)];
     
     let curX = headX, curY = headY;
     for (let i = 0; i < 3; i++) {
-        curX -= dir[0];
-        curY -= dir[1];
-        snake.push(curX, curY);
+        while (true) {
+            let dir = directions[Math.floor(Math.random() * 4)];
+            let nx = curX - dir[0];
+            let ny = curY - dir[1];
+
+            if (nx < 1 || nx > 8 || ny < 1 || ny > 8) {
+                continue;
+            }
+
+            let isColliding = false;
+            for (let j = 0; j < snake.length; j += 2) {
+                if (snake[j] === nx && snake[j + 1] === ny) {
+                    isColliding = true;
+                    break;
+                }
+            }
+            if (isColliding) {
+                continue;
+            }
+
+            curX = nx;
+            curY = ny;
+            snake.push(curX, curY);
+            break;
+        }
     }
 
     while (true) {
@@ -82,7 +103,7 @@ function generateRandomSnakeAndFood() {
     return [snake, food];
 }
 
-let num_tests = 100
+let num_tests = 2000
 for (let i = 0; i < num_tests; i++) {
     const [snake, food] = generateRandomSnakeAndFood();
     // console.log(`Test ${i + 1}:`, { snake, food });
