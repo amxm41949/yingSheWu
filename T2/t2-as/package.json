@@ -1,7 +1,7 @@
 {
-  "name": "t2_as",
+  "name": "t2-as",
   "version": "1.0.0",
-  "main": "release.js",
+  "main": "index.js",
   "scripts": {
     "test": "node tests",
     "asbuild:debug": "asc assembly/index.ts --target debug",
