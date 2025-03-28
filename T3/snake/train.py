@@ -63,8 +63,8 @@ wandb.init(project="snake-ppo", config={
     "board_size": 5,
     "num_epochs": 100000,
     "T_HORIZON": 200,
-    "gamma": 0.99,
-    "learning_rate": 2e-4
+    "gamma": 0.9,
+    "learning_rate": 2e-5
 })
 
 def train():
@@ -111,7 +111,6 @@ def train():
 
         reward_buffer.append(episode_reward)
 
-        # 记录训练数据到 wandb
         if episode % 100 == 0:
             avg_reward = sum(reward_buffer) / len(reward_buffer)
             avg_len = sum(rollout_lengths) / len(rollout_lengths)
@@ -122,7 +121,6 @@ def train():
             reward_buffer = []
             rollout_lengths = []
 
-        # 保存模型
         if episode % 1000 == 0:
             model_path = f"./snake/checkpoints/ppo_model_{episode}.pth"
             agent.save(model_path)

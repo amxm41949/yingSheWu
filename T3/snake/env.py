@@ -150,7 +150,9 @@ class SnakeEnv(gym.Env):
             fx, fy = self.get_nearest_food(old_snake[0])
             old_dis = abs(old_snake[0][0] - fx) + abs(old_snake[0][1] - fy)
             new_dis = abs(self.snake[0][0] - fx) + abs(self.snake[0][1] - fy)
-            reward = (old_dis - new_dis) / 10.
+            reward = (old_dis - new_dis).float()
+
+        reward += torch.tensor(0.1)
 
         return self.get_state(), reward, self.done, {}
 

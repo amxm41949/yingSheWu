@@ -3,3 +3,4 @@ build/
 question.md
 checkpoints/
 wandb/
+__pycache__

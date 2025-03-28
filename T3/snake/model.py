@@ -1,3 +1,4 @@
+import random
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -29,15 +30,34 @@ class SnakeMLP(nn.Module):
     def __init__(self, board_size, num_actions=4):
         super(SnakeMLP, self).__init__()
         self.board_size = board_size
-        input_dim = 3 * board_size * board_size  # 3个通道
+        input_dim = 3 * board_size * board_size 
         self.fc1 = nn.Linear(input_dim, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, num_actions)
     
     def forward(self, x):
         # 输入 x 的形状为 [batch, channels, height, width]
-        x = x.view(x.size(0), -1)  # 展平所有输入特征
+        x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return F.softmax(x, dim=-1)
+    
+class ReplayBuffer:
+    def __init__(self, capacity, seed):
+        self.capacity = capacity
+        self.buffer = []
+        self.index = 0
+        random.seed(seed)
+
+    def push(self, state, action, reward, next_state, done):
+        if len(self.buffer) < self.capacity:
+            self.buffer.append(None)
+        self.buffer[self.index] = (state, action, reward, next_state, done)
+        self.index = (self.index + 1) % self.capacity
+
+    def sample(self, batch_size):
+        return random.sample(self.buffer, batch_size)
+
+    def __len__(self):
+        return len(self.buffer)
