@@ -21,8 +21,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 EPOCHS = 100000
 
 class PPO:
-    def __init__(self, state_dim, action_dim):
-        self.policy = SnakeMLP(state_dim, action_dim).to(device)
+    def __init__(self, state_dim, action_dim, policy_model_cls=SnakeMLP):
+        self.policy = policy_model_cls(state_dim, action_dim).to(device)
         self.optimizer = optim.Adam(self.policy.parameters(), lr=LR)
     
     def update(self, states, actions, log_probs_old, rewards):
@@ -61,20 +61,22 @@ class PPO:
 # 初始化 wandb
 wandb.init(project="snake-ppo", config={
     "board_size": 5,
-    "num_epochs": 10000,
+    "num_epochs": 100000,
     "T_HORIZON": 200,
     "gamma": 0.99,
-    "learning_rate": 3e-4
+    "learning_rate": 2e-4
 })
 
 def train():
     os.makedirs("./snake/checkpoints/", exist_ok=True)
 
+    torch.manual_seed(114514)
+
     env = SnakeEnv(5, 1, 5)
     state_dim = env.board_size
     action_dim = env.action_space.n
     
-    agent = PPO(state_dim, action_dim)
+    agent = PPO(state_dim, action_dim, SnakeNet)
     reward_buffer = []
     rollout_lengths = []
 
