@@ -1,0 +1,17 @@
+Episode 0, Avg Reward: 0.00, Avg Len: 2.0
+Episode 100, Avg Reward: -5.14, Avg Len: 4.07
+Episode 200, Avg Reward: -7.15, Avg Len: 4.1
+Episode 300, Avg Reward: -6.74, Avg Len: 4.27
+Episode 400, Avg Reward: -6.43, Avg Len: 4.4
+Traceback (most recent call last):
+  File "/mnt/d/sandbox/yingSheWu/T3/snake/train.py", line 130, in <module>
+    train()
+  File "/mnt/d/sandbox/yingSheWu/T3/snake/train.py", line 103, in train
+    loss = agent.update(
+  File "/mnt/d/sandbox/yingSheWu/T3/snake/train.py", line 52, in update
+    loss.backward()
+  File "/home/cxccxc/anaconda3/envs/SDXL/lib/python3.10/site-packages/torch/_tensor.py", line 492, in backward
+    torch.autograd.backward(
+  File "/home/cxccxc/anaconda3/envs/SDXL/lib/python3.10/site-packages/torch/autograd/__init__.py", line 251, in backward
+    Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
