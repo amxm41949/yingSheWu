@@ -4,19 +4,23 @@ import torch
 from gym import spaces
 import torch.nn.functional as F
 
+from model import SnakeNet
 from policy import greedy_policy_wrapper
 
 class SnakeEnv(gym.Env):
-    def __init__(self, board_size=5, num_others_init=1, num_foods=5):
+    def __init__(self, board_size=5, num_others_init=1, num_foods=5, max_round=50):
         super(SnakeEnv, self).__init__()
 
         self.board_size = board_size
         self.num_others_init = num_others_init
         self.num_others = num_others_init
         self.num_foods = num_foods
+        self.max_round = max_round
         self.action_space = spaces.Discrete(4)  # 4个动作（上左下右）
         self.observation_space = spaces.Box(low=0, high=1, shape=(3, board_size, board_size), dtype=np.float32)
+
         self.snake_dead = False
+        self.steps = 0
 
         self.reset()
 
@@ -24,10 +28,12 @@ class SnakeEnv(gym.Env):
         """初始化游戏状态"""
         self.done = False
         self.snake_dead = False
+        self.steps = 0
         snakes = self.place_snakes(self.num_others_init + 1) 
         self.snake = snakes[0]
 
         self.others = snakes[1:]
+        self.num_others = self.num_others_init
         
         # 生成不与蛇重叠的食物
         self.foods = torch.zeros([0,2])
@@ -74,8 +80,10 @@ class SnakeEnv(gym.Env):
     def place_snakes(self, total):
         board_half = self.board_size // 2
         snakes = []
+        if total == 1:
+            snakes.append(self.gen_snake(0, self.board_size-1, 0, self.board_size-1))
+
         if total == 2:
-            
             if torch.randint(0,2, (1,),).item()> 0.5: # up and down
                 snakes.append(self.gen_snake(0, self.board_size-1, 0, board_half-1))
                 snakes.append(self.gen_snake(0, self.board_size-1, board_half, self.board_size-1))
@@ -96,11 +104,17 @@ class SnakeEnv(gym.Env):
 
     def step(self, action):
         """执行一步动作，包括 AI 和其他蛇"""
+        if self.steps >= self.max_round:
+            self.done = True
+
         if self.done:
             return self.get_state(), torch.tensor(0.0), True, {}
+        
+        self.steps += 1
 
         old_snakes = self.get_snakes()
         old_snake = self.snake.clone()
+        
         # 计算 AI 蛇的下一步位置
         self.snake = torch.concat([self.move(self.snake[0], action).unsqueeze(0), self.snake[:-1]])
         # 计算其他蛇的动作（使用贪心策略）
@@ -126,7 +140,7 @@ class SnakeEnv(gym.Env):
             return self.get_state(), reward, self.done, {}
             
         if len(dead) > 0:
-            dead_mask = torch.zeros([self.num_others]).bool()
+            dead_mask = torch.zeros([self.others.shape[0]]).bool()
             dead_mask[np.array(dead)-1]=1
 
             self.others = self.others[~dead_mask]
@@ -141,13 +155,15 @@ class SnakeEnv(gym.Env):
                         if i == 0:
                             ate = True
         
+        old_foods = self.foods.clone()
+
         if self.foods.shape[0] < self.num_foods:
             self.foods = self.gen_food()
         
         if ate:
             reward = torch.tensor(10.0)
         else:
-            fx, fy = self.get_nearest_food(old_snake[0])
+            fx, fy = self.get_nearest_food(old_snake[0], old_foods)
             old_dis = abs(old_snake[0][0] - fx) + abs(old_snake[0][1] - fy)
             new_dis = abs(self.snake[0][0] - fx) + abs(self.snake[0][1] - fy)
             reward = (old_dis - new_dis).float()
@@ -160,15 +176,15 @@ class SnakeEnv(gym.Env):
         delta = torch.tensor([[-1, 0], [0, -1], [1, 0], [0, 1]])  # 上、左、下、右
         return pos + delta[action]
 
-    def get_nearest_food(self, pos):
-        nearest_food_idx = torch.argmin(torch.sum((self.foods - pos) ** 2,dim=-1))
-        return self.foods[nearest_food_idx]
+    def get_nearest_food(self, pos, foods):
+        nearest_food_idx = torch.argmin(torch.sum((foods - pos) ** 2,dim=-1))
+        return foods[nearest_food_idx]
     
     def greedy_move(self, snakes, idx):
         """其他蛇采用贪心策略：朝食物移动"""
         snake = snakes[idx]
         others = torch.concat([snakes[:idx], snakes[idx+1:]])
-        food = self.get_nearest_food(snake[0])
+        food = self.get_nearest_food(snake[0], self.foods)
         direction = greedy_policy_wrapper(self.board_size, snake, food, others)
         if direction != -1:
             return direction
@@ -197,7 +213,7 @@ class SnakeEnv(gym.Env):
 
         ch_snake[snake_pt[0, 0], snake_pt[0, 1]] = 1
         ch_snake[snake_pt[1:2, 0], snake_pt[1:2, 1]] = -1
-        ch_snake[snake_pt[2:, 0], snake_pt[2:, 1]] = 0.5
+        # ch_snake[snake_pt[2:, 0], snake_pt[2:, 1]] = 0.5
 
         head_mask = torch.zeros([others_pt.shape[0]]).bool()
         head_mask[::4] = 1
@@ -223,12 +239,12 @@ class SnakeEnv(gym.Env):
 
         # 画AI蛇
         if not self.snake_dead:
-            board[self.snake[0, 0], self.snake[0, 1]] = " S "
-            for i, (x, y) in enumerate(self.snake[1:]):
+            board[self.snake[0, 0].clamp(0,self.board_size-1), self.snake[0, 1].clamp(0,self.board_size-1)] = " S "
+            for i, (x, y) in enumerate(self.snake[1:].clamp(0,self.board_size-1)):
                 board[x, y] = f" {i+1} "
 
         # 画其他蛇
-        for other in self.others:
+        for other in self.others.clamp(0,self.board_size-1):
             board[other[0, 0], other[0, 1]] = " O "
             for x, y in other[1:]:
                 board[x, y] = " o "
@@ -237,24 +253,33 @@ class SnakeEnv(gym.Env):
 
 
 def main():
-    env = SnakeEnv(5,1)
+    board_size = 8
+    num_others = 1 if board_size == 5 else 3
+    num_foods = 5 if board_size == 5 else 10
+    max_round = 50 if board_size == 5 else 100
+    
+    model = SnakeNet(board_size, 4)
+    state_dict = torch.load(f'./snake/checkpoints/dqn_model_{board_size}_10000.pth')
+    model.load_state_dict(state_dict)
+    model.eval()
+
+    env = SnakeEnv(board_size, num_others, num_foods, max_round)
     env.render()
-    while True:
-        direction = input()
-        if 'w' in direction:
-            direction = 0
-        elif 'a' in direction:
-            direction = 1
-        elif 's' in direction:
-            direction = 2
-        elif 'd' in direction:
-            direction = 3
-        state, reward, done, _ = env.step(direction)
-        
-        env.render()
-        print("reward:", reward)
-        if done:
-            break
+    reward_sum = 0
+    with torch.no_grad():
+        while env.steps < max_round:
+            
+            q_values = model(env.get_state().unsqueeze(0))
+            direction = q_values.argmax().item()
+            # breakpoint()
+            state, reward, done, _ = env.step(direction)
+            reward_sum += reward
+            env.render()
+            print("reward:", reward, " step:", env.steps)
+            if done :
+                break
+
+    print("reward_sum:",reward_sum)
 
 if __name__ == "__main__":
     main()
