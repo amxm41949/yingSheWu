@@ -11,7 +11,7 @@ def main():
     max_round = 50 if board_size == 5 else 100
     
     model = SnakeNet(board_size, 4)
-    state_dict = torch.load(f'./snake/checkpoints/dqn_model_{board_size}_42000.pth')
+    state_dict = torch.load(f'./snake/checkpoints/dqn_model_{board_size}_sota.pth')
     model.load_state_dict(state_dict)
     model.eval()
 
