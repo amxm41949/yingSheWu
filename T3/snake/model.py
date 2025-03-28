@@ -24,7 +24,6 @@ class SnakeNet(nn.Module):
         x = x.view(x.shape[0], -1)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
-        # return F.softmax(x, dim=-1)
         return x
     
 class SnakeMLP(nn.Module):

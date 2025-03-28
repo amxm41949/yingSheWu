@@ -181,7 +181,6 @@ class SnakeEnv(gym.Env):
         return foods[nearest_food_idx]
     
     def greedy_move(self, snakes, idx):
-        """其他蛇采用贪心策略：朝食物移动"""
         snake = snakes[idx]
         others = torch.concat([snakes[:idx], snakes[idx+1:]])
         food = self.get_nearest_food(snake[0], self.foods)
@@ -197,7 +196,6 @@ class SnakeEnv(gym.Env):
             return 2 if x < fx else 0
 
     def check_collision(self, pos, others):
-        """检查是否撞墙或撞到其他蛇"""
         if not (0 <= pos[0] < 8 and 0 <= pos[1] < 8):
             return True
         return (pos == others).all(dim=1).any()
@@ -213,7 +211,6 @@ class SnakeEnv(gym.Env):
 
         ch_snake[snake_pt[0, 0], snake_pt[0, 1]] = 1
         ch_snake[snake_pt[1:2, 0], snake_pt[1:2, 1]] = -1
-        # ch_snake[snake_pt[2:, 0], snake_pt[2:, 1]] = 0.5
 
         head_mask = torch.zeros([others_pt.shape[0]]).bool()
         head_mask[::4] = 1
@@ -225,7 +222,6 @@ class SnakeEnv(gym.Env):
         return torch.stack([ch_snake, ch_others, ch_foods])
 
     def get_state(self):
-        """返回游戏状态：蛇、食物、其他蛇"""
         state = self.convert_state(self.board_size, self.snake, self.others, self.foods)
         return state
 
@@ -250,37 +246,3 @@ class SnakeEnv(gym.Env):
                 board[x, y] = " o "
 
         print("\n".join(["".join(row) for row in board]) + "\n")
-
-
-def main():
-    board_size = 8
-    num_others = 1 if board_size == 5 else 3
-    num_foods = 5 if board_size == 5 else 10
-    max_round = 50 if board_size == 5 else 100
-    
-    model = SnakeNet(board_size, 4)
-    state_dict = torch.load(f'./snake/checkpoints/dqn_model_{board_size}_10000.pth')
-    model.load_state_dict(state_dict)
-    model.eval()
-
-    env = SnakeEnv(board_size, num_others, num_foods, max_round)
-    env.render()
-    reward_sum = 0
-    with torch.no_grad():
-        while env.steps < max_round:
-            
-            q_values = model(env.get_state().unsqueeze(0))
-            direction = q_values.argmax().item()
-            # breakpoint()
-            state, reward, done, _ = env.step(direction)
-            reward_sum += reward
-            env.render()
-            print("reward:", reward, " step:", env.steps)
-            if done :
-                break
-
-    print("reward_sum:",reward_sum)
-
-if __name__ == "__main__":
-    main()
-
