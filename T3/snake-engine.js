@@ -12,7 +12,7 @@ let memory = __wasm.memory;
  * @param {BigInt|undefined} customSeed Optional custom random seed (64-bit)
  * @returns {Object} Game state
  */
-export function initializeGameState(mode = "4snakes", snakeModules, customSeed = CUSTOM_SEED) {
+export function initializeGameState(mode = "4snakes", snakeModules, customSeed = 114514) {
   // Get game parameters from configuration
   const config = gameParameters[mode] || gameParameters["4snakes"];
   let n = config.boardSize;
@@ -21,8 +21,16 @@ export function initializeGameState(mode = "4snakes", snakeModules, customSeed =
   let max_rounds = config.maxRounds;
   
   // Initialize snake positions
-  let snakes = [...config.initialSnakePositions];
-
+  let snakes = mode=="1v1"? shuffleArray([
+    [1, 4, 1, 3, 1, 2, 1, 1],
+    [5, 2, 5, 3, 5, 4, 5, 5]
+  ]): shuffleArray([
+    [4, 1, 3, 1, 2, 1, 1, 1],
+    [8, 4, 8, 3, 8, 2, 8, 1],
+    [5, 8, 6, 8, 7, 8, 8, 8],
+    [1, 5, 1, 6, 1, 7, 1, 8],
+  ]);
+  // console.log(snakes)
   // Random seed for food generation - generate 64-bit BigInt
   let seed;
   if (customSeed !== undefined) {
@@ -280,4 +288,13 @@ export function getFinalResults(gameState) {
     dead_round,
     time
   };
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1)); // 生成 0 到 i 之间的随机索引
+      [arr[i], arr[j]] = [arr[j], arr[i]]; // 交换两行
+  }
+
+  return arr;
 }
