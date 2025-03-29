@@ -79,7 +79,7 @@ class Agent:
         self.target_q_net.load_state_dict(self.q_net.state_dict())
 
 def train():
-    os.makedirs("./snake_dqn/checkpoints/", exist_ok=True)
+    os.makedirs("./snake/checkpoints/", exist_ok=True)
 
     seed = 114514
     torch.manual_seed(seed)

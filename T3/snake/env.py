@@ -138,6 +138,8 @@ class SnakeEnv(gym.Env):
             self.done = True
             self.snake_dead = True
             return self.get_state(), reward, self.done, {}
+        
+        reward = torch.tensor(0.0)
             
         if len(dead) > 0:
             dead_mask = torch.zeros([self.others.shape[0]]).bool()
@@ -146,6 +148,9 @@ class SnakeEnv(gym.Env):
             self.others = self.others[~dead_mask]
             self.num_others = self.others.shape[0]
 
+            reward += len(dead) * 5
+
+        num_dead = (self.num_others_init - self.others.shape[0])
         ate = False
 
         for i in range(self.num_others+1):
@@ -161,14 +166,14 @@ class SnakeEnv(gym.Env):
             self.foods = self.gen_food()
         
         if ate:
-            reward = torch.tensor(10.0)
+            reward += torch.tensor(10.0 + num_dead * 5)
         else:
             fx, fy = self.get_nearest_food(old_snake[0], old_foods)
             old_dis = abs(old_snake[0][0] - fx) + abs(old_snake[0][1] - fy)
             new_dis = abs(self.snake[0][0] - fx) + abs(self.snake[0][1] - fy)
-            reward = (old_dis - new_dis).float()
+            reward += (old_dis - new_dis).float() * (num_dead + 1) * 2
 
-        reward += torch.tensor(0.1)
+        reward += torch.tensor(0.2)
 
         return self.get_state(), reward, self.done, {}
 
