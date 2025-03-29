@@ -125,7 +125,7 @@ export function greedySnakeMoveBarriers(n: i32, snake: Array<i32>, food: Array<i
     return -1;
 }
 
-function greedy_policy_wrapper(n: i32, snake: Array<i32>, otherSnakeCount: i32, otherSnakes: Array<i32>, food_num: i32, foods: Array<i32>): i32 {
+export function greedy_policy_wrapper(n: i32, snake: Array<i32>, otherSnakeCount: i32, otherSnakes: Array<i32>, food_num: i32, foods: Array<i32>, remainingRounds: i32): i32 {
     let head_x = snake[0];
     let head_y = snake[1];
 
