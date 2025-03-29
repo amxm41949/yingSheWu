@@ -16,7 +16,18 @@ def main():
     model.eval()
 
     env = SnakeEnv(board_size, num_others, num_foods, max_round)
+   
+    # state =  env.convert_state(board_size,
+    #                   torch.tensor([2, 5, 2, 6, 2, 7, 3, 7])  ,
+    #                   torch.tensor([6, 3, 5, 3, 4, 3, 4, 2, 6, 5, 6, 4, 5, 4, 4, 4, 3, 0, 3, 1, 3, 2, 2, 2]) ,
+    #                   torch.tensor([1, 7, 1, 3, 0, 3, 4, 1, 7, 4, 2, 1, 2, 3, 5, 7, 4, 5, 5, 6])
+    #                   )
+
+    # print(state)
+    # print(model(state.unsqueeze(0)))
+
     env.render()
+    breakpoint()
     reward_sum = 0
     with torch.no_grad():
         while env.steps < max_round:
