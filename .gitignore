@@ -4,3 +4,4 @@ question.md
 checkpoints/
 wandb/
 __pycache__
+*.jpg

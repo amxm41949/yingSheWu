@@ -165,9 +165,9 @@ export function greedy_policy_wrapper(n: i32, snake: Array<i32>, otherSnakeCount
 
 
 export function greedy_snake_step(n: i32, snake: Array<i32>, otherSnakeCount: i32, otherSnakes: Array<i32>, food_num: i32, foods: Array<i32>, remainingRounds: i32): i32 {
-    if (n == 5){
-        return greedy_policy_wrapper(n, snake, otherSnakeCount, otherSnakes, food_num, foods, remainingRounds);
-    }
+    // if (n == 5){
+    //     return greedy_policy_wrapper(n, snake, otherSnakeCount, otherSnakes, food_num, foods, remainingRounds);
+    // }
     
     let inputTensor:Tensor = convertState(n, snake, otherSnakes, foods);
     // printTensor(inputTensor);
